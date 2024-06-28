@@ -5,6 +5,7 @@ from selenium.webdriver.common.keys import Keys
 import time
 import pandas as pd
 from openpyxl.workbook import Workbook
+from webdriver_manager.chrome import ChromeDriverManager
 
 query = input("Enter the google search: ")
 query = query.split()
@@ -15,10 +16,11 @@ chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--window-size=1920x1080")
-driver = webdriver.Chrome(service=Service("chromedriver.exe"),options=chrome_options)
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=chrome_options)
 List = {
-    "adText":[],
-    "Advertiser":[]
+    "AdText":[],
+    "Advertiser":[],
+    "Location":[]
 }
 for i in range(n):
     if i!=0:
@@ -30,8 +32,9 @@ for i in range(n):
     last_height = driver.execute_script("return document.body.scrollHeight")
     while True:
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(5) 
+        time.sleep(10)
         new_height = driver.execute_script("return document.body.scrollHeight")
+        print("scrolled\n")
         if new_height == last_height:
             break
         last_height = new_height
@@ -44,14 +47,19 @@ for i in range(n):
         driver.execute_script("arguments[0].scrollIntoView();", clickable)
         driver.execute_script("arguments[0].click();", clickable)
         time.sleep(5)
-        AdvertiserName = driver.find_element(By.CLASS_NAME,"xZhkSd").text
-        List["adText"].append(adtext)
+        AdvertiserLoc = driver.find_elements(By.CLASS_NAME,"xZhkSd")
+        AdvertiserName = AdvertiserLoc[0].text
+        Location = AdvertiserLoc[1].text
+        List["AdText"].append(adtext)
         List["Advertiser"].append(AdvertiserName)
+        List["Location"].append(Location)
         time.sleep(5)
         webdriver.ActionChains(driver).send_keys(Keys.ESCAPE).perform()
         time.sleep(5)
         print(f"Completed AdDiv {j+1}")
         j += 1
+time.sleep(10)
 driver.quit()
 df = pd.DataFrame(List)
-df.to_excel(f'data/{query}+Ad+Advertiser.xlsx', index=False)
+df.to_excel(f'{query}+Ad+Advertiser.xlsx', index=False)
+
